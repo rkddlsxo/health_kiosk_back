@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import models, database
 from .routes import user
 from .api import auth, menu, health, recommendation, kiosk, users
+from app.api import analytics
 
 # DB 테이블 생성
 models.Base.metadata.create_all(bind=database.engine)
@@ -26,6 +27,7 @@ app.include_router(health.router)  # /api/health/*
 app.include_router(recommendation.router)  # /api/recommend/*
 app.include_router(kiosk.router)  # /api/kiosk/*
 app.include_router(users.router, prefix="/api/users") # /api/users/* (프론트엔드 호환용)
+app.include_router(analytics.router)
 
 @app.get("/")
 def read_root():

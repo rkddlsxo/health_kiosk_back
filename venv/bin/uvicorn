@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/intae/Desktop/학교 자료/ascii/health_kiosk_back/venv/bin/python3" "$0" "$@"
+'''exec' "/Users/intae/Desktop/학교 자료/as/health_kiosk_back/venv/bin/python3" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re
