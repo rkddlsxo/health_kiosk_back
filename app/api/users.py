@@ -71,11 +71,15 @@ async def scan_health_report(
     image_bytes = await file.read()
     parsed_data = gemini_service.parse_health_report(image_bytes)
     
-    if not parsed_data:
-        raise HTTPException(status_code=400, detail="건강검진표 분석 실패")
+    
+    # 분석 실패 시(빈 딕셔너리) 400 에러 대신 빈 데이터로 진행 (수동 입력 유도)
+    if parsed_data is None:
+        parsed_data = {}
+        # raise HTTPException(status_code=400, detail="건강검진표 분석 실패")
     
     health_record = db.query(UserHealth).filter(UserHealth.user_id == user.id).first()
     if not health_record:
+        # parsed_data가 비어있어도 생성
         health_record = UserHealth(user_id=user.id, **parsed_data)
         db.add(health_record)
     else:
@@ -139,8 +143,10 @@ async def scan_allergy_test(
     image_bytes = await file.read()
     allergens = gemini_service.parse_allergy_test(image_bytes)
     
+    # 분석 실패 시 빈 리스트
     if allergens is None:
-        raise HTTPException(status_code=400, detail="알레르기 검사지 분석 실패")
+        allergens = []
+        # raise HTTPException(status_code=400, detail="알레르기 검사지 분석 실패")
     
     count = 0
     for allergen in allergens:
@@ -182,3 +188,32 @@ async def add_allergy_manual(
     background_tasks.add_task(update_user_recommendation, user.id)
         
     return {"message": "알레르기 추가 완료"}
+
+# 6. 건강 리포트 생성 (건강 조언)
+@router.get("/{account_id}/advice")
+def get_health_advice(
+    account_id: str,
+    db: Session = Depends(get_db)
+):
+    user = get_user_by_account_id(db, account_id)
+    gemini_service = get_gemini_service()
+    
+    # 건강 정보 조회
+    health_record = db.query(UserHealth).filter(UserHealth.user_id == user.id).first()
+    health_data = {}
+    if health_record:
+        # 주요 건강 지표만 추출
+        for col in ["height", "weight", "bmi", "fasting_blood_sugar", "total_cholesterol", 
+                    "ldl_cholesterol", "triglyceride", "bp_high", "bp_low"]:
+            val = getattr(health_record, col, None)
+            if val is not None:
+                health_data[col] = val
+                
+    # 알레르기 정보 조회
+    allergy_records = db.query(UserAllergy).filter(UserAllergy.user_id == user.id).all()
+    allergens = [a.allergen_name for a in allergy_records]
+    
+    # Gemini를 이용해 조언 생성
+    advice = gemini_service.generate_health_advice(health_data, allergens)
+    
+    return advice

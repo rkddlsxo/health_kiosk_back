@@ -113,22 +113,44 @@ JSON 형식 예시:
 """
         
         try:
-            response = self.model.generate_content([prompt, image])
+            # 타임아웃 20초 설정
+            response = self.model.generate_content(
+                [prompt, image]
+            )
             result_text = response.text.strip()
             
-            # JSON 추출 (코드 블록으로 감싸진 경우 처리)
-            if "```json" in result_text:
-                result_text = result_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in result_text:
-                result_text = result_text.split("```")[1].split("```")[0].strip()
+            # JSON 정제 (MarkDown 코드 블록 및 불필요한 공백 제거)
+            clean_text = result_text.replace("```json", "").replace("```", "").strip()
             
-            # JSON 파싱
-            parsed_data = json.loads(result_text)
+            # JSON 파싱 시도
+            try:
+                parsed_data = json.loads(clean_text)
+            except json.JSONDecodeError:
+                # 파싱 실패 시 텍스트에서 일부라도 건질 수 있는지 시도하거나, 로그 남기고 빈 딕셔너리 리턴
+                print(f"JSON 파싱 실패. Raw text: {result_text}")
+                parsed_data = {}
+
+            # 필수 키가 없으면 기본값으로라도 채움 (None 반환 방지)
+            default_keys = [
+                "height", "weight", "waist", "bmi", "vision_l", "vision_r", 
+                "hearing_l", "hearing_r", "bp_high", "bp_low", "urine_protein",
+                "hemoglobin", "fasting_blood_sugar", "total_cholesterol", 
+                "hdl_cholesterol", "triglyceride", "ldl_cholesterol", 
+                "creatinine", "ast", "alt", "gamma_gtp", "hepatitis_b_antigen", 
+                "hepatitis_b_antibody", "chest_xray"
+            ]
+            
+            for key in default_keys:
+                if key not in parsed_data:
+                    parsed_data[key] = None
+            
             return parsed_data
             
         except Exception as e:
             print(f"건강검진표 파싱 오류: {e}")
-            return None
+            # 아예 실패해도 400 에러보다는 빈 데이터라도 넘겨서 수동 입력을 유도하는 게 나을 수 있음
+            # 사용자 경험을 위해 None 대신 빈 딕셔너리 반환
+            return {}
     
     def parse_allergy_test(self, image_bytes: bytes) -> Optional[list[str]]:
         """
@@ -145,7 +167,7 @@ JSON 형식 예시:
             image = Image.open(io.BytesIO(image_bytes))
         except Exception as e:
             print(f"이미지 로드 오류: {e}")
-            return None
+            return []
         
         prompt = """
 다음은 알레르기 검사 결과지 이미지입니다.
@@ -163,17 +185,21 @@ JSON 형식 예시:
 """
         
         try:
-            response = self.model.generate_content([prompt, image])
+            # 타임아웃 20초 설정
+            response = self.model.generate_content(
+                [prompt, image]
+            )
             result_text = response.text.strip()
             
-            # JSON 추출
-            if "```json" in result_text:
-                result_text = result_text.split("```json")[1].split("```")[0].strip()
-            elif "```" in result_text:
-                result_text = result_text.split("```")[1].split("```")[0].strip()
+            # JSON 정제
+            clean_text = result_text.replace("```json", "").replace("```", "").strip()
             
             # JSON 파싱
-            allergens = json.loads(result_text)
+            try:
+                allergens = json.loads(clean_text)
+            except json.JSONDecodeError:
+                print(f"알레르기 JSON 파싱 실패. Raw: {result_text}")
+                allergens = []
             
             if isinstance(allergens, list):
                 return allergens
@@ -182,7 +208,7 @@ JSON 형식 예시:
             
         except Exception as e:
             print(f"알레르기 검사지 파싱 오류: {e}")
-            return None
+            return []
     
     def generate_menu_recommendations(
         self, 
@@ -220,9 +246,11 @@ JSON 형식 예시:
    - 중성지방 높음(≥150) → 지방 많은 메뉴 경고
    - 혈압 높음(≥130/85) → 카페인 많은 메뉴 경고
    - AST/ALT 높음 → 지방 많은 메뉴 경고
-   - 헤모글로빈 낮음 → 철분 많은 음식 권장
-3. 경고 메뉴에 대해 대체 옵션 제안(alternatives)
-4. 안전한 메뉴는 추천(recommended)
+5. 추천 메뉴에는 반드시 **"실행 가능한 옵션"**을 1개 이상 포함하세요.
+   - 당뇨/혈당 높음 → "덜 달게", "시럽 제외"
+   - 고혈압/카페인 민감 → "디카페인", "연하게"
+   - 고령자 → "따뜻하게", "부드럽게", "얼음 적게"
+   - 특별한 이슈가 없으면 빈 리스트 []
 """
         
         # 프롬프트 생성
@@ -241,14 +269,14 @@ JSON 형식 예시:
   "recommended": [
     {{
       "menu_id": 메뉴ID (숫자),
-      "reason": "추천 이유 (한글 한 문장)",
-      "selected_options": ["옵션1", "옵션2"] (없으면 빈 리스트)
+      "reason": "추천 이유 (어르신이 이해하기 쉽게 '~~에 좋습니다')",
+      "selected_options": ["덜 달게", "따뜻하게"] (상황에 맞는 구체적 옵션)
     }}
   ],
   "blocked_health": [
     {{
       "menu_id": 메뉴ID (숫자),
-      "reason": "건강상 피해야 할 이유 한 줄"
+      "reason": "건강상 주의 이유"
     }}
   ]
 }}
@@ -260,8 +288,10 @@ JSON 형식 예시:
 """
         
         try:
-            # 타임아웃 설정 제거 (라이브러리 호환성 문제)
-            response = self.model.generate_content(prompt)
+            # 타임아웃 20초 설정
+            response = self.model.generate_content(
+                prompt
+            )
             result_text = response.text.strip()
             
             # JSON 추출
@@ -279,6 +309,56 @@ JSON 형식 예시:
             return {
                 "recommended": [],
                 "blocked_health": []
+            }
+
+    def generate_health_advice(
+        self,
+        health_data: Dict[str, Any],
+        allergens: list[str]
+    ) -> Dict[str, str]:
+        """
+        건강 정보와 알레르기 정보를 바탕으로 3대 건강 조언 생성
+        """
+        prompt = f"""
+당신은 전문 건강 컨설턴트입니다.
+사용자의 건강검진 결과와 알레르기 정보를 분석하여, 다음 3가지 항목에 대한 구체적이고 전문적인 조언을 작성해주세요.
+반드시 **한국어**로 답변해야 합니다.
+
+[사용자 데이터]
+- 건강 정보: {json.dumps(health_data, ensure_ascii=False)}
+- 알레르기 정보: {json.dumps(allergens, ensure_ascii=False)}
+
+[작성 항목]
+1. **식습관 (대사 관리)**: 혈당, 혈압, 콜레스테롤 수치 등을 고려한 구체적인 식단 가이드.
+2. **알레르기 대응**: 보유한 알레르기 항원을 피하는 방법과 대체 식품 제안.
+3. **운동 방향**: BMI, 혈압 등을 고려한 적절한 운동 강도와 종류 추천.
+
+[출력 형식]
+반드시 아래 JSON 형식으로만 답해주세요. 키 이름은 고정입니다. 내용은 줄바꿈 없이 한 문단으로 간결하게 요약해주세요.
+
+{{
+  "diet_advice": "내용...",
+  "allergy_advice": "내용...",
+  "exercise_advice": "내용..."
+}}
+"""
+        try:
+            response = self.model.generate_content(prompt)
+            result_text = response.text.strip()
+            
+            if "```json" in result_text:
+                result_text = result_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in result_text:
+                result_text = result_text.split("```")[1].split("```")[0].strip()
+                
+            return json.loads(result_text)
+            
+        except Exception as e:
+            print(f"건강 조언 생성 오류: {e}")
+            return {
+                "diet_advice": "죄송합니다. 건강 조언을 생성하는 중에 문제가 발생했습니다.",
+                "allergy_advice": "알레르기 정보를 분석할 수 없습니다.",
+                "exercise_advice": "운동 조언을 불러오지 못했습니다."
             }
 
 

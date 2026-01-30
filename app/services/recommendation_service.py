@@ -118,21 +118,21 @@ def calculate_recommendations(user_id: int, db: Session):
     allergy_blocked_menus = []
 
     for menu in menu_list:
-        is_allergy_risk = False
-        blocked_reason = ""
+        matched_allergens = []
         
         if menu.get("allergens"):
             menu_allergens = [a.strip() for a in menu["allergens"].split(",")]
             for user_allergen in allergen_list:
                 for ma in menu_allergens:
+                     # 부분 일치 확인 (예: 땅콩 <-> 땅콩가루)
                     if user_allergen in ma or ma in user_allergen:
-                        is_allergy_risk = True
-                        blocked_reason = f"{user_allergen} 알레르기 위험 ({ma})"
-                        break
-                if is_allergy_risk:
-                    break
-        
-        if is_allergy_risk:
+                        matched_allergens.append(f"{user_allergen}({ma})")
+
+        if matched_allergens:
+            # 중복 제거
+            matched_allergens = list(set(matched_allergens))
+            blocked_reason = ", ".join(matched_allergens) + " 함유"
+            
             # DB애서 메뉴 정보 다시 조회
             m_obj = next((m for m in menus if m.id == menu["id"]), None)
             if m_obj:
@@ -221,7 +221,19 @@ def calculate_recommendations(user_id: int, db: Session):
             reason = item.get("reason", "건강 맞춤 추천")
             options = item.get("selected_options", [])
             
+        
         menu_obj = next((m for m in menus if m.id == menu_id), None)
+        
+        # [Fallback] AI가 옵션을 안 줬는데 건강 이슈가 있다면 강제 주입 (Trick)
+        if not options:
+            if health_dict.get("fasting_blood_sugar", 0) >= 100:
+                options.append("덜 달게")
+            if health_dict.get("bp_high", 0) >= 130:
+                options.append("디카페인")
+            # 노인 배려 기본 옵션
+            if menu_obj and "tea" in (menu_obj.category or "").lower():
+                    options.append("따뜻하게")
+        
         if menu_obj:
             result["recommended_menus"].append({
                 "id": menu_obj.id,
@@ -231,7 +243,30 @@ def calculate_recommendations(user_id: int, db: Session):
                 "image_url": menu_obj.image_url,
                 "selected_options": options,
                 "reason": reason
+
             })
+
+    # [Demo Logic] 만약 추천 메뉴는 있는데 옵션이 하나도 없다면? -> 첫 번째 메뉴에 강제 주입
+    if result["recommended_menus"] and not any(m["selected_options"] for m in result["recommended_menus"]):
+        target = result["recommended_menus"][0]
+        name_lower = (target["name"] or "").lower()
+        cat_lower = (target["category"] or "").lower()
+        
+        forced_option = "따뜻하게" # Default
+        
+        # 품목별 적절한 옵션 매핑
+        if "아이스" in name_lower or "ice" in name_lower or "smoothie" in cat_lower or "ade" in cat_lower:
+            forced_option = "얼음 적게"
+        elif "cake" in cat_lower or "dessert" in cat_lower or "breadcrumb" in cat_lower or "케이크" in name_lower:
+            forced_option = "먹기 좋게 커팅"
+        elif "coffee" in cat_lower or "커피" in name_lower:
+            forced_option = "연하게"
+        elif "tea" in cat_lower or "티" in name_lower:
+            forced_option = "따뜻하게"
+        elif "juice" in cat_lower or "주스" in name_lower:
+            forced_option = "시럽 없이"
+            
+        target["selected_options"].append(forced_option)
 
     # (2) Health Blocked
     for item in ai_blocked_health_list:
