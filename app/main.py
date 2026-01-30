@@ -1,13 +1,14 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from . import models, schemas, database
+from . import models, database
+from .routes import user  # 방금 만든 user 라우터 불러오기
 
 # DB 테이블 생성
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI()
 
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -16,21 +17,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/register", response_model=schemas.UserResponse)
-def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
-    # 1. 이미 있는 아이디인지 확인
-    existing_user = db.query(models.User).filter(models.User.account_id == user.account_id).first()
-    if existing_user:
-        raise HTTPException(status_code=400, detail="이미 사용 중인 아이디입니다.")
-    
-    # 2. 없으면 저장
-    new_user = models.User(
-        account_id=user.account_id,
-        password=user.password,
-        name=user.name
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    
-    return new_user
+# ★ 핵심: 쪼개놓은 라우터를 여기서 합침!
+app.include_router(user.router)
+
+@app.get("/")
+def read_root():
+    return {"status": "서버 정상 작동 중"}

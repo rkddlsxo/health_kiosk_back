@@ -6,6 +6,10 @@ class UserCreate(BaseModel):
     password: str
     name: str
 
+class UserLogin(BaseModel):
+    account_id: str
+    password: str    
+
 # 응답으로 줄 데이터
 class UserResponse(BaseModel):
     account_id: str
