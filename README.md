@@ -12,8 +12,8 @@ FastAPI를 기반으로 구축되었으며, 얼굴 인식을 통한 로그인, �
 | 이름 | 역할 | GitHub | 담당 기능 |
 |:---:|:---:|:---:|:---|
 | **강인태** | 팀장 | [@rkddlsxo](https://github.com/rkddlsxo) | 프론트엔드, 백엔드 , AI요약 기능 |
-| **김지웅** | 팀원 | [@moongyuxx]([링크](https://github.com/wldnd7145)) | 백엔드, AI기능 전반 |
-| **문규원** | 팀원 | [@wldnd7145]([링크](https://github.com/moongyuxx)) | API 설계, 문서, UI/UX 디자인, 백엔드|
+| **김지웅** | 팀원 | [@wldnd7145](https://github.com/wldnd7145) | AI기능 전반, 백엔드 |
+| **문규원** | 팀원 | [@moongyuxx](https://github.com/moongyuxx) | API 설계, 문서, UI/UX 디자인, 백엔드|
 
 
 ## 🛠 기술 스택 (Tech Stack)
