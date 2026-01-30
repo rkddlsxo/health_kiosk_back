@@ -1,25 +1,16 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-from app.config import get_settings
 
-settings = get_settings()
+# root:비밀번호@주소/DB이름 (비밀번호 없으면 비워둠)
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@localhost:3306/kiosk"
 
-# SQLite 엔진 생성
-engine = create_engine(
-    settings.database_url,
-    connect_args={"check_same_thread": False}  # SQLite용 설정
-)
-
-# 세션 팩토리
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base 클래스 (모든 모델이 상속)
 Base = declarative_base()
 
-
+# DB 세션 함수
 def get_db():
-    """DB 세션 의존성"""
     db = SessionLocal()
     try:
         yield db
