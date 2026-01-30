@@ -238,16 +238,29 @@ JSON 형식 예시:
 
 위 정보를 바탕으로 아래 JSON 형식으로 답해주세요:
 {{
-  "recommended": [추천 메뉴 ID 리스트],
-  "warnings": [{{"menu_id": 메뉴ID, "reason": "경고 이유 한 줄"}}],
-  "blocked": [{{"menu_id": 메뉴ID, "reason": "차단 이유 한 줄"}}],
-  "alternatives": [{{"menu_id": 메뉴ID, "suggestion": "대체 옵션 제안 한 줄"}}]
+  "recommended": [
+    {{
+      "menu_id": 메뉴ID (숫자),
+      "reason": "추천 이유 (한글 한 문장)",
+      "selected_options": ["옵션1", "옵션2"] (없으면 빈 리스트)
+    }}
+  ],
+  "blocked_health": [
+    {{
+      "menu_id": 메뉴ID (숫자),
+      "reason": "건강상 피해야 할 이유 한 줄"
+    }}
+  ]
 }}
 
-반드시 JSON 형식으로만 답해주세요.
+규칙:
+1. `recommended`에는 가장 적합한 메뉴 2개만 선정하세요.
+2. `blocked_health`에는 건강 데이터상 위험한 메뉴를 모두 넣으세요.
+3. 반드시 JSON 형식으로만 답해주세요.
 """
         
         try:
+            # 타임아웃 설정 제거 (라이브러리 호환성 문제)
             response = self.model.generate_content(prompt)
             result_text = response.text.strip()
             
@@ -257,6 +270,7 @@ JSON 형식 예시:
             elif "```" in result_text:
                 result_text = result_text.split("```")[1].split("```")[0].strip()
             
+            # JSON 파싱
             recommendations = json.loads(result_text)
             return recommendations
             
@@ -264,9 +278,7 @@ JSON 형식 예시:
             print(f"메뉴 추천 생성 오류: {e}")
             return {
                 "recommended": [],
-                "warnings": [],
-                "blocked": [],
-                "alternatives": []
+                "blocked_health": []
             }
 
 

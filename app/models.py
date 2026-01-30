@@ -11,6 +11,7 @@ class User(Base):
     account_id = Column(String(50), unique=True, index=True)
     password = Column(String(100))
     name = Column(String(50))
+    recommendation_cache = Column(Text, nullable=True) # 추천 결과 캐싱 (JSON)
     
     # 관계 설정 (1명의 유저는 여러 정보를 가질 수 있음)
     health_records = relationship("UserHealth", back_populates="owner")
