@@ -1,4 +1,4 @@
-# Health Kiosk Backend (API Server)
+# Medi-Pass Backend (API Server)
 
 이 프로젝트는 사용자 건강 맞춤형 메뉴 추천 키오스크를 위한 백엔드 API 서버입니다.
 FastAPI를 기반으로 구축되었으며, 얼굴 인식을 통한 로그인, 사용자 건강 설문 데이터 처리, 그리고 Google Gemini AI를 활용한 맞춤형 식단 추천 기능을 제공합니다.
