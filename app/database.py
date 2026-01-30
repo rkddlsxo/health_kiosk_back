@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # root:비밀번호@주소/DB이름 (비밀번호 없으면 비워둠)
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:1234@localhost:3306/kiosk"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:@localhost:3306/kiosk"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
