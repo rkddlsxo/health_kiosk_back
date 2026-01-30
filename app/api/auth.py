@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from app.database import get_db
 from app.models import User, UserFace
-from app.schemas.auth import UserCreate, UserResponse, LoginRequest, LoginResponse
+from app.schemas import UserCreate, UserResponse, LoginRequest, LoginResponse
 from app.services.face_service import get_face_service
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])

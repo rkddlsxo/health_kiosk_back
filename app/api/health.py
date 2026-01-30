@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, UserHealth, UserAllergy
-from app.schemas.health import (
+from app.schemas import (
     UserHealthCreate,
     UserHealthResponse,
     UserAllergyCreate,

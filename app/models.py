@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, DateTime
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Date, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -82,8 +82,44 @@ class UserFace(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     
     # 얼굴 특징 벡터 (보통 128~512개의 실수 배열이므로 긴 문자열이나 JSON으로 저장)
-    embedding = Column(String(4000)) # JSON 문자열로 저장 권장
+    embedding = Column(Text) # JSON 문자열로 저장 (용량 확보)
     embedding_model = Column(String(50), default="arcface-r100")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     owner = relationship("User", back_populates="face_data")
+
+# 5. 메뉴 정보
+class Menu(Base):
+    __tablename__ = "menus"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))  # 메뉴 이름
+    price = Column(Integer)  # 가격
+    category = Column(String(50))  # 카테고리
+    image_url = Column(String(200), nullable=True) # 이미지 파일명
+    
+    # 알러지 정보
+    allergens = Column(String(200), nullable=True)  # 알러지 유발 물질
+    
+    # 영양 정보
+    calories = Column(Integer) # 칼로리 (kcal)
+    carbs = Column(Float) # 탄수화물 (g)
+    protein = Column(Float) # 단백질 (g)
+    fat = Column(Float) # 지방 (g)
+    sugar = Column(Float) # 당류 (g)
+    sodium = Column(Float) # 나트륨 (mg)
+    
+    # 관계
+    options = relationship("MenuOption", back_populates="menu")
+
+# 6. 메뉴 옵션
+class MenuOption(Base):
+    __tablename__ = "menu_options"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    menu_id = Column(Integer, ForeignKey("menus.id"))
+    
+    option_name = Column(String(100))
+    price_change = Column(Integer, default=0)
+    
+    menu = relationship("Menu", back_populates="options")

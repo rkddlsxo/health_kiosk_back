@@ -39,13 +39,15 @@ async def get_menu_recommendations(user_id: int, db: Session = Depends(get_db)):
             "id": menu.id,
             "name": menu.name,
             "category": menu.category,
-            "ingredients": menu.base_ingredients,
+            "ingredients": None, # base_ingredients 컬럼 사라짐 -> None 처리 또는 제거
             "allergens": menu.allergens,
             "nutrition": {
-                "sugar": menu.sugar_g,
-                "fat": menu.fat_g,
+                "sugar": menu.sugar,
+                "fat": menu.fat,
                 "calories": menu.calories,
-                "caffeine": menu.caffeine_mg
+                "protein": menu.protein,
+                "sodium": menu.sodium,
+                "carbs": menu.carbs
             }
         }
         menu_list.append(menu_dict)

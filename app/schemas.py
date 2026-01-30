@@ -20,6 +20,18 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+# 3-1. 로그인 요청 스키마
+class LoginRequest(BaseModel):
+    account_id: str
+    password: str
+
+# 3-2. 로그인 응답 스키마  
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+    user_id: int
+    user_name: str
+
 # 4. 알레르기 등록 데이터
 class AllergyCreate(BaseModel):
     allergen_name: str
@@ -61,3 +73,73 @@ class HealthRecordCreate(BaseModel):
     hepatitis_b_antigen: Optional[str] = None
     hepatitis_b_antibody: Optional[str] = None
     chest_xray: Optional[str] = None
+
+# 6. 건강 정보 생성 스키마
+class UserHealthCreate(BaseModel):
+    checkup_date: Optional[date] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    waist: Optional[float] = None
+    bmi: Optional[float] = None
+    vision_l: Optional[float] = None
+    vision_r: Optional[float] = None
+    hearing_l: Optional[str] = None
+    hearing_r: Optional[str] = None
+    bp_high: Optional[int] = None
+    bp_low: Optional[int] = None
+    urine_protein: Optional[str] = None
+    hemoglobin: Optional[float] = None
+    fasting_blood_sugar: Optional[int] = None
+    total_cholesterol: Optional[int] = None
+    hdl_cholesterol: Optional[int] = None
+    triglyceride: Optional[int] = None
+    ldl_cholesterol: Optional[int] = None
+    creatinine: Optional[float] = None
+    ast: Optional[int] = None
+    alt: Optional[int] = None
+    gamma_gtp: Optional[int] = None
+    hepatitis_b_antigen: Optional[str] = None
+    hepatitis_b_antibody: Optional[str] = None
+    chest_xray: Optional[str] = None
+
+# 7. 건강 정보 응답 스키마
+class UserHealthResponse(BaseModel):
+    id: int
+    user_id: int
+    checkup_date: Optional[date] = None
+    height: Optional[float] = None
+    weight: Optional[float] = None
+    waist: Optional[float] = None
+    bmi: Optional[float] = None
+    bp_high: Optional[int] = None
+    bp_low: Optional[int] = None
+    hemoglobin: Optional[float] = None
+    fasting_blood_sugar: Optional[int] = None
+    total_cholesterol: Optional[int] = None
+    hdl_cholesterol: Optional[int] = None
+    triglyceride: Optional[int] = None
+    ldl_cholesterol: Optional[int] = None
+    creatinine: Optional[float] = None
+    ast: Optional[int] = None
+    alt: Optional[int] = None
+    gamma_gtp: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+# 8. 알러지 생성 스키마
+class UserAllergyCreate(BaseModel):
+    allergen_name: str
+    reaction: Optional[str] = None
+    severity: Optional[str] = None
+
+# 9. 알러지 응답 스키마
+class UserAllergyResponse(BaseModel):
+    id: int
+    user_id: int
+    allergen_name: str
+    reaction: Optional[str] = None
+    severity: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
