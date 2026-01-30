@@ -3,6 +3,19 @@
 이 프로젝트는 사용자 건강 맞춤형 메뉴 추천 키오스크를 위한 백엔드 API 서버입니다.
 FastAPI를 기반으로 구축되었으며, 얼굴 인식을 통한 로그인, 사용자 건강 설문 데이터 처리, 그리고 Google Gemini AI를 활용한 맞춤형 식단 추천 기능을 제공합니다.
 
+## 🔗 관련 리포지토리 (Repositories)
+이 프로젝트는 프론트엔드와 백엔드로 나뉘어 있습니다.
+* **Frontend**: [health_kiosk_front 링크 바로가기](https://github.com/rkddlsxo/health_kiosk_front)
+* **Backend**: [health_kiosk_back 링크 바로가기](https://github.com/rkddlsxo/health_kiosk_back)
+
+## 👥 팀원 및 역할 (Team)
+| 이름 | 역할 | GitHub | 담당 기능 |
+|:---:|:---:|:---:|:---|
+| **강인태** | Full Stack | [@rkddlsxo](https://github.com/rkddlsxo) | 프론트엔드, 백엔드 , AI요약 기능 |
+| **김지웅** | Frontend | [@moongyuxx]([링크](https://github.com/wldnd7145)) | 백엔드, AI기능 전반 |
+| **문규원** | Backend | [@wldnd7145]([링크](https://github.com/moongyuxx)) | API 설계, 문서, UI/UX 디자인, 백엔드|
+
+
 ## 🛠 기술 스택 (Tech Stack)
 
 * **Language**: Python 3.9+
