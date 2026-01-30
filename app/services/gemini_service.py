@@ -130,6 +130,60 @@ JSON 형식 예시:
             print(f"건강검진표 파싱 오류: {e}")
             return None
     
+    def parse_allergy_test(self, image_bytes: bytes) -> Optional[list[str]]:
+        """
+        알레르기 검사지 이미지를 파싱하여 양성 반응 항목 리스트 반환
+        
+        Args:
+            image_bytes: 알레르기 검사지 이미지 바이트 데이터
+            
+        Returns:
+            알레르기 항원 이름 리스트 (예: ["땅콩", "우유"])
+        """
+        # 바이트를 PIL Image로 변환
+        try:
+            image = Image.open(io.BytesIO(image_bytes))
+        except Exception as e:
+            print(f"이미지 로드 오류: {e}")
+            return None
+        
+        prompt = """
+다음은 알레르기 검사 결과지 이미지입니다.
+이 중에서 '양성' 또는 주의해야 할 반응이 나온 **알레르기 항원(식품 또는 물질)의 이름**만 찾아서 문자열 리스트로 JSON 포맷으로 반환해주세요.
+
+규칙:
+1. 수치가 높거나 양성인 항목만 추출하세요.
+2. 항목 이름만 한글로 적어주세요.
+3. 찾을 수 없거나 양성 항목이 없으면 빈 리스트 [] 를 반환하세요.
+
+JSON 형식 예시:
+["우유", "땅콩", "집먼지진드기"]
+
+반드시 JSON 형식의 리스트로만 답해주세요.
+"""
+        
+        try:
+            response = self.model.generate_content([prompt, image])
+            result_text = response.text.strip()
+            
+            # JSON 추출
+            if "```json" in result_text:
+                result_text = result_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in result_text:
+                result_text = result_text.split("```")[1].split("```")[0].strip()
+            
+            # JSON 파싱
+            allergens = json.loads(result_text)
+            
+            if isinstance(allergens, list):
+                return allergens
+            else:
+                return []
+            
+        except Exception as e:
+            print(f"알레르기 검사지 파싱 오류: {e}")
+            return None
+    
     def generate_menu_recommendations(
         self, 
         health_data: Dict[str, Any], 
